@@ -7,7 +7,8 @@ from config import oraDB
 @app.route('/person/<string:eeni>',methods = ["GET"])
 def get_reg(eeni):
     try:
-        res = None
+        exists = None
+        payment_flag = 0
         path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\validate_reg_nib#.sql"
         sql = open(path,"r")
         params = {"eeni#":eeni}
@@ -19,12 +20,18 @@ def get_reg(eeni):
                     if not rows:
                         break
                     for r in rows:
-                        res = r[0]
-                if res is None:
-                    res = 'N'
+                        exists = r[0]
+                        payment_flag = r[1]
+                if exists is None:
+                    exists = 'N'
                 else:
-                    res = 'Y'
+                    exists = 'Y'
+
+                if payment_flag > 0:
+                   payment_flag = 'Y'
+                else:
+                    payment_flag = 'N'
         sql.close()
-        return jsonify(success="Y",exists=res),200
+        return jsonify(success="Y",exists=exists,receiving_payment=payment_flag),200
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500

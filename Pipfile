@@ -12,6 +12,8 @@ flask = "*"
 cx-oracle = "*"
 redis = "*"
 rq = "*"
+flask-jwt-extended = "*"
+python-ldap = "*"
 
 [requires]
 python_version = "3.7"

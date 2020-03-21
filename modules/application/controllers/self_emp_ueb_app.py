@@ -4,13 +4,15 @@ from modules.application import app
 from config import oraDB
 from redis import Redis
 from rq import Queue
-from modules.application.background_jobs.mailer.mailer import send_mail
+from modules.application.background_jobs.mailer.Html_Mailer import send_mail
 import os
+
 
 @app.route('/Self-Employed-UEB/application',methods = ["POST"])
 def create_application():
     try:
-        q = Queue(connection=Redis())
+        #q = Queue(connection=Redis())
+        email_events = []
         conn = cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}")
         cursor = conn.cursor()
         application_id = cursor.var(cx_Oracle.NUMBER,20) if not None else ''
@@ -29,22 +31,26 @@ def create_application():
         island_of_operation = params["island_of_operation"]
         estimated_weekly_earnings = params["estimated_weekly_earnings"]
         user = 'SYSTEM'
+        account_owner = params["account_owner"]
         branch_number = params["branch_number"]
-        bank_code = params["bank_code"]
         account_type = params["account_type"]
         bank_account_number = params["bank_account_number"]
         bank_info_status = params["bank_info_status"]
         cursor.callproc("client.create_self_emp_ueb_app",[first_name,last_name,dob,eeni,\
                         erni,email,primary_contact,secondary_contact,place_of_operation,island_of_operation,\
-                        estimated_weekly_earnings,user,branch_number,bank_code,account_type,bank_account_number,\
+                        estimated_weekly_earnings,user,account_owner,branch_number,account_type,bank_account_number,\
                         bank_info_status,application_id,success,message])
         if success.getvalue() == "N":
             raise Exception(f"Error Submitting Application: {message.getvalue()}")
         
-        subject = "Self Employed Unemployment Benefit Assistance"
-        sender = "claims@nib-bahamas.com"
-        template_path =  os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/background_jobs/mailer/html_templates/app_submitted.hmtl"
-        res = q.enqueue(send_mail,subject,sender,email,template_path)
-        return jsonify(success='Y',message=''),200
+        if len(eeni) == 0:
+            email_events.append("Employee Registration")
+        
+        if len(erni) == 0:
+            email_events.append("Employer Registration")
+    
+        email_events.append("Application Submitted")
+        send_mail(email,email_events,params)
+        return jsonify(success='Y',application_id=application_id.getvalue(),message=''),201
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500
