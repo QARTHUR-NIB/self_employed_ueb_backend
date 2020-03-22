@@ -8,7 +8,7 @@ from config import jwt
 app = Flask(__name__, template_folder="templates")
 CORS(app)
 
-UPLOAD_FOLDER = 'C:/Uploads'
+UPLOAD_FOLDER = 'C:\\Uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 app.config['JSON_AS_ASCII'] = False

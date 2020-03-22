@@ -1,12 +1,12 @@
 import cx_Oracle
 from flask import Flask, request, jsonify
+from flask_jwt_extended import (jwt_required, get_jwt_identity)
 from modules.application import app
 from config import oraDB
 from redis import Redis
 from rq import Queue
 from modules.application.background_jobs.mailer.Html_Mailer import send_mail
 import os
-
 
 @app.route('/Self-Employed-UEB/application',methods = ["POST"])
 def create_application():
@@ -52,5 +52,65 @@ def create_application():
         email_events.append("Application Submitted")
         send_mail(email,email_events,params)
         return jsonify(success='Y',application_id=application_id.getvalue(),message=''),201
+    except Exception as e:
+        return jsonify(success="N",message=f"System Error: {str(e)}"),500
+
+@app.route('/Self-Employed-UEB/applications',methods = ["GET"])
+@jwt_required
+def get_applications():
+    try:
+        data = []
+        count = 0
+        path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\get_applications.sql"
+        sql = open(path,"r")
+        params = {"page_size":int(request.args['page_size']),"page_number":int(request.args['page_num'])}
+        with cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}") as conn:
+            with conn.cursor() as cursor:
+                results = cursor.execute(sql.read(),params)
+                while True:
+                    rows = results.fetchall()
+                    if not rows:
+                        break
+                    for r in rows:
+                        count = r[18]
+                        result = {"application_id":r[0],"first_name":r[1],"last_name":r[2],
+                                "dob":r[3],"eeni#":r[4],"erni#":r[5],
+                                "email":r[6],"primary_contact":r[7],"secondary_contact":r[8],
+                                "place_of_operation":r[9],"island_of_operation":r[10],
+                                "document_location":r[11],"status":r[12],"inserted_by":r[13],
+                                "inserted_date":r[14],"updated_by":r[15],"updated_date":r[16],
+                                "row_number":r[17],"url":f"/Self-Employed-UEB/applications/{r[0]}"}
+                        data.append(result)
+        sql.close()
+        return jsonify(success="Y",data=data,count=count),200
+    except Exception as e:
+        return jsonify(success="N",message=f"System Error: {str(e)}"),500
+
+@app.route('/Self-Employed-UEB/applications/<int:app_id>',methods = ["GET"])
+@jwt_required
+def get_application(app_id):
+    try:
+        data = []
+        path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\get_individual_applications.sql"
+        sql = open(path,"r")
+        params = {"app_id":app_id}
+        with cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}") as conn:
+            with conn.cursor() as cursor:
+                results = cursor.execute(sql.read(),params)
+                while True:
+                    rows = results.fetchall()
+                    if not rows:
+                        break
+                    for r in rows:
+                        result = {"application_id":r[0],"first_name":r[1],"last_name":r[2],
+                                "dob":r[3],"eeni#":r[4],"erni#":r[5],
+                                "email":r[6],"primary_contact":r[7],"secondary_contact":r[8],
+                                "place_of_operation":r[9],"island_of_operation":r[10],
+                                "document_location":r[11],"status":r[12],"inserted_by":r[13],
+                                "inserted_date":r[14],"updated_by":r[15],"updated_date":r[16],
+                                "row_number":r[17]}
+                        data.append(result)
+        sql.close()
+        return jsonify(success="Y",data=data),200
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500
