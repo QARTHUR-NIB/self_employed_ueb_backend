@@ -13,7 +13,6 @@ def authenticate():
         server = Server("nib-bahamas.com",get_info=ALL)
         conn = Connection(server,user=f"nib-bahamas.com\\{user}",password=pwd,authentication=NTLM,auto_bind=True,raise_exceptions=False)
         conn.open()
-        print(conn)
         if conn is not None:
             success = 'Y'
             access_token = create_access_token(identity=data)             
@@ -26,3 +25,13 @@ def authenticate():
             return jsonify(success=success,token=access_token,message=message),404
         else:
             return jsonify(success="N",message=f"System Error: {str(e)}"),500
+
+@app.route('/auth/user', methods= ['GET'])
+@jwt_required
+def authenticated_user():
+    try:
+        user = get_jwt_identity()
+        user = user['user_name']
+        return jsonify(success='Y',user=user,message=""),200
+    except Exception as e:
+        return jsonify(success="N",message=f"System Error: {str(e)}"),500
