@@ -1,6 +1,25 @@
-<html>
-    <div>
-        <p>Hello {{application.first_name}} </p>
-        <p>Your Application has been submitted successfully.</p>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Application Successfully Submitted</title>
+    <style>
+      .wrapper {
+        width: 600px;
+        padding: 2rem;
+        margin: 0 auto;
+      }
+      p {
+        font-size: 1.25rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <p>Hello {{application.first_name}},</p>
+      <p>Your application has been submitted successfully.</p>
     </div>
+  </body>
 </html>

@@ -4,9 +4,10 @@ from pathlib import Path
 import sys
 import os
 from flask import render_template
-from modules.application.background_jobs.mailer import Submission_Email,Employee_Registration_Email,Employer_Registration_Email
+from modules.application.background_jobs.mailer import Submission_Email,Employee_Registration_Email,Employer_Registration_Email,\
+                                                       Application_Approved_Email,Application_Denied_Email
 
-def send_mail(recipient,email_events,application):
+def send_mail(email_events,application):
      for event in email_events:
         if event == "Application Submitted":
             template = render_template('app_submitted.html',application=application)
@@ -20,3 +21,11 @@ def send_mail(recipient,email_events,application):
             template = render_template('employer_registration.html',application=application)
             erni_reg_email = Employer_Registration_Email.Employer_Registration_Email(template)
             erni_reg_email.send()
+        elif event == "Application Approved":
+            template = render_template('app_approved.html',application=application)
+            app_aprv_email = Application_Approved_Email.Application_Approved_Email(application["email"],template)
+            app_aprv_email.send()
+        elif event == "Application Denied":
+            template = render_template('app_denied.html',application=application)
+            app_aprv_email = Application_Denied_Email.Application_Denied_Email(application["email"],template)
+            app_aprv_email.send()

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Contact Employer for Registration</title>
+    <title>Application Denied</title>
     <style>
       .wrapper {
         width: 600px;
@@ -18,13 +18,13 @@
   </head>
   <body>
     <div class="wrapper">
-      <p>Hello,</p>
-      <p>The Employer below can be contacted for registration:</p>
-      <ul>
-        <li>Name: {{application.first_name}} {{application.last_name}}</li>
-        <li>Email: {{application.email}}</li>
-        <li>Telephone: {{application.primary_contact}}</li>
-      </ul>
+      <p>Hello {{application.first_name}},</p>
+      <p>
+        We regret to inform you that your application for the Government
+        Assistance: Self Employed Unemployment Benefit has been denied for the
+        following reason:
+      </p>
+      <p>{{application.comment}}</p>
     </div>
   </body>
 </html>

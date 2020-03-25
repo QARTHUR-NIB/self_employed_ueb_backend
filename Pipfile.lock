@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "2fefa8a766fd4c5ba88d8745bbeefefb57ff09dba0aeed03e5e48958c29d5092"
+            "sha256": "2fec3a3cf3d89b7650a0dc3f7bbc0331dffadd2b6e057a71bb0b4ba62283c365"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -83,6 +83,14 @@
             ],
             "version": "==2.11.1"
         },
+        "ldap3": {
+            "hashes": [
+                "sha256:17f04298b70bf7ecaa5db8a7d8622b5a962ef7fc2b245b2eea705ac1c24338c0",
+                "sha256:81df4ac8b6df10fb1f05b17c18d0cb8c4c344d5a03083c382824960ed959cf5b"
+            ],
+            "index": "pypi",
+            "version": "==2.7"
+        },
         "markupsafe": {
             "hashes": [
                 "sha256:00bc623926325b26bb9605ae9eae8a215691f33cae5df11ca5424f06f2d1f473",
@@ -128,26 +136,12 @@
             ],
             "version": "==0.4.8"
         },
-        "pyasn1-modules": {
-            "hashes": [
-                "sha256:905f84c712230b2c592c19470d3ca8d552de726050d1d1716282a1f6146be65e",
-                "sha256:a50b808ffeb97cb3601dd25981f6b016cbb3d31fbf57a8b8a87428e6158d0c74"
-            ],
-            "version": "==0.2.8"
-        },
         "pyjwt": {
             "hashes": [
                 "sha256:5c6eca3c2940464d106b99ba83b00c6add741c9becaec087fb7ccdefea71350e",
                 "sha256:8d59a976fb773f3e6a39c85636357c4f0e242707394cadadd9814f5cbaa20e96"
             ],
             "version": "==1.7.1"
-        },
-        "python-ldap": {
-            "hashes": [
-                "sha256:7d1c4b15375a533564aad3d3deade789221e450052b21ebb9720fb822eccdb8e"
-            ],
-            "index": "pypi",
-            "version": "==3.2.0"
         },
         "redis": {
             "hashes": [

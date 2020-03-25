@@ -9,7 +9,7 @@ from config import oraDB
 def get_branches():
     try:
         data = []
-        path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\get_bank_branches.sql"
+        path = os.path.join(app.config['SCRIPT_FOLDER'],"get_bank_branches.sql")
         sql = open(path,"r")
         with cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}") as conn:
             with conn.cursor() as cursor:
@@ -32,7 +32,8 @@ def get_bank_account_info(app_id):
     try:
         data = []
         params = {"app_id":app_id}
-        path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\get_bank_info.sql"
+        #path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\get_bank_info.sql"
+        path = os.path.join(app.config['SCRIPT_FOLDER'],"get_bank_info.sql")
         sql = open(path,"r")
         with cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}") as conn:
             with conn.cursor() as cursor:
@@ -67,9 +68,9 @@ def create_bank_account_info(app_id):
         bank_info_status = 'Active'
         user = get_jwt_identity()
         user = user['user_name']
-        cursor.callproc("client.create_se_ueb_app_bank_info",[app_id,account_owner,\
+        cursor.callproc("client.create_se_ueb_app_bank_info",[app_id,\
                         branch_number,account_type,bank_account_number,bank_info_status,\
-                        user,success,message])
+                        account_owner,user,success,message])
 
         if success.getvalue() == "N":
             raise Exception(f"Error Creating Bank Account {message.getvalue()}")

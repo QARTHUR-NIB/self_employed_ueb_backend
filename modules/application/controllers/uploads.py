@@ -30,6 +30,8 @@ def upload_file(app_id):
 				if not os.path.exists(os.path.join(f"{app.config['UPLOAD_FOLDER']}\\{app_id}\\", filename)):
 					file.save(os.path.join(f"{app.config['UPLOAD_FOLDER']}\\{app_id}\\", filename))
 					success = True
+				else:
+					success = True
 			else:
 				errors[file.filename] = 'File type is not allowed'
 		
@@ -65,7 +67,6 @@ def get_uploaded_files(app_id):
 		return jsonify(success="N",message=f"System Error: {str(e)}"),500
 
 @app.route('/uploads/<string:app_id>/file/<string:file_name>',methods = ["GET"])
-@jwt_required
 def download_file(app_id,file_name):
 	try:
 		return send_from_directory(f"{app.config['UPLOAD_FOLDER']}\\{app_id}",file_name,as_attachment=True)

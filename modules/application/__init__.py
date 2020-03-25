@@ -9,7 +9,9 @@ app = Flask(__name__, template_folder="templates")
 CORS(app)
 
 UPLOAD_FOLDER = 'C:\\Uploads'
+SCRIPT_FOLDER = os.path.dirname(os.path.realpath(__file__)) + "\\scripts"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['SCRIPT_FOLDER'] = SCRIPT_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 app.config['JSON_AS_ASCII'] = False
 app.config['JWT_SECRET_KEY'] = jwt.secret

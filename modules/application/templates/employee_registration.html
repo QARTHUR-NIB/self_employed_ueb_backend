@@ -1,12 +1,30 @@
-<html>
-    <div>
-        <p>Good Afternoon,</p>
-        <p>The Registrant below can be contacted for registartion:</p>
-        <p>Registration Details:</p>
-        <ul>
-            <li>Name: {{application.first_name}} {{application.last_name}}</li>
-            <li>Email: {{application.email}}</li>
-            <li>Telephone: {{application.primary_contact}}</li>
-        </ul>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Contact Applicant for Registration</title>
+    <style>
+      .wrapper {
+        width: 600px;
+        padding: 2rem;
+        margin: 0 auto;
+      }
+      p {
+        font-size: 1.25rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <p>Hello,</p>
+      <p>The Registrant below can be contacted for registration:</p>
+      <ul>
+        <li>Name: {{application.first_name}} {{application.last_name}}</li>
+        <li>Email: {{application.email}}</li>
+        <li>Telephone: {{application.primary_contact}}</li>
+      </ul>
     </div>
+  </body>
 </html>

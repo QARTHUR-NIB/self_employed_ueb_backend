@@ -8,7 +8,7 @@ from config import oraDB
 def get_islands():
     try:
         data = []
-        path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\get_islands.sql"
+        path = os.path.join(app.config['SCRIPT_FOLDER'],"get_islands.sql")
         sql = open(path,"r")
         #params = {"page_size":int(request.args['page_size']),"page_number":int(request.args['page_num'])}
         with cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}") as conn:
