@@ -27,7 +27,8 @@ create table client.self_emp_ueb_app (
        approved_by varchar(25),
        denied_by varchar(25),
        user_comment varchar(250),
-       denial_date date     
+       denial_date date,
+       nature_of_employment varchar(250)     
 )
 /
 create table client.self_emp_ueb_bank_info (
@@ -95,6 +96,7 @@ create or replace procedure client.create_self_emp_ueb_app(
        p_bank_account_number in client.self_emp_ueb_bank_info.bank_account_number%type,
        p_bank_info_status in client.self_emp_ueb_bank_info.status%type,
        p_bank_info_exist boolean,
+       p_nature_of_employment in client.self_emp_ueb_app.nature_of_employment%type,
        p_app_id out client.self_emp_ueb_bank_info.app_id%type,
        p_success out varchar,
        p_message out varchar
@@ -103,10 +105,10 @@ create or replace procedure client.create_self_emp_ueb_app(
 begin
   insert into client.self_emp_ueb_app
   (first_name,last_name,dob,eeni#,erni#,email,primary_contact,secondary_contact,place_of_operation,
-   island_of_operation,estimated_weekly_earnings,status,inserted_by)
+   island_of_operation,estimated_weekly_earnings,status,nature_of_employment,inserted_by)
   values(p_first_name,p_last_name,to_date(p_dob,'YYYYMMDD'),p_eeni#,p_erni#,p_email,p_primary_contact,
          p_secondary_contact,p_place_of_operation,p_island_of_operation,p_estimated_weekly_earnings,
-         'Pending',p_user);
+         'Pending',p_nature_of_employment,p_user);
          
   select client.self_emp_ueb_app_seq.currval into p_app_id from dual;
   

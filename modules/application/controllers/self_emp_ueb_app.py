@@ -11,11 +11,8 @@ import os
 @app.route('/Self-Employed-UEB/application',methods = ["POST"])
 def create_application():
     try:
-        print("Inside Method")
         email_events = []
-        print("Connecting")
         conn = cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}")
-        print("Connected")
         cursor = conn.cursor()
         application_id = cursor.var(cx_Oracle.NUMBER,20) if not None else ''
         success = cursor.var(cx_Oracle.STRING,1) if not None else ''
@@ -39,10 +36,11 @@ def create_application():
         bank_account_number = params["bank_account_number"]
         bank_info_status = params["bank_info_status"]
         bank_info_exists = params["bank_info_exists"]
+        nature_of_employment = params["nature_of_employment"]
         cursor.callproc("client.create_self_emp_ueb_app",[first_name,last_name,dob,eeni,\
                         erni,email,primary_contact,secondary_contact,place_of_operation,island_of_operation,\
                         estimated_weekly_earnings,user,account_owner,branch_number,account_type,bank_account_number,\
-                        bank_info_status,bank_info_exists,application_id,success,message])
+                        bank_info_status,bank_info_exists,nature_of_employment,application_id,success,message])
         if success.getvalue() == "N":
             raise Exception(f"Error Submitting Application: {message.getvalue()}")
         
@@ -125,8 +123,8 @@ def get_applications():
                                 "inserted_by":r[15],
                                 "inserted_date":r[16],"updated_by":r[17],"updated_date":r[18],
                                 "approved_by":r[19],"denied_by":r[20],"comment":r[21],
-                                "denial_date":r[22],
-                                "row_number":r[23],"url":f"/Self-Employed-UEB/applications/{r[0]}"}
+                                "denial_date":r[22],"nature_of_employment":r[23],
+                                "row_number":r[24],"url":f"/Self-Employed-UEB/applications/{r[0]}"}
                         data.append(result)
         if sql:
             sql.close()
@@ -159,7 +157,7 @@ def get_application(app_id):
                                 "inserted_by":r[15],
                                 "inserted_date":r[16],"updated_by":r[17],"updated_date":r[18],
                                 "approved_by":r[19],"denied_by":r[20],"comment":r[21],
-                                "denial_date":r[22],
+                                "denial_date":r[22],"nature_of_employment":r[23],
                                 "url":f"/Self-Employed-UEB/applications/{r[0]}"}
                         data.append(result)
         sql.close()
@@ -196,8 +194,8 @@ def update_application_status(app_id):
         email_events = []
         path = ""
         params = request.json
-        app = params.get('application')
-        app["comment"] = params["user_comment"]
+        user_app = params.get('application')
+        user_app["comment"] = params["user_comment"]
         del params['application'] #remove application because oracle cannot not parse dictionary data
         if params["status"] == 'Approved':
             #path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\approve_application.sql"
@@ -219,7 +217,7 @@ def update_application_status(app_id):
                 cursor.execute(sql.read(),params)
                 conn.commit()
         sql.close()   
-        send_mail(email_events,app)
+        send_mail(email_events,user_app)
         return jsonify(success="Y",data=data),200
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500
