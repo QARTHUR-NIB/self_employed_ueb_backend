@@ -10,7 +10,7 @@ def authenticate():
         user = data["user_name"]
         pwd = data["password"]
         access_token = ""
-        server = Server("nib-bahamas.com",get_info=ALL)
+        server = Server("172.16.0.6",get_info=ALL)
         conn = Connection(server,user=f"nib-bahamas.com\\{user}",password=pwd,authentication=NTLM,auto_bind=True,raise_exceptions=False)
         conn.open()
         if conn is not None:

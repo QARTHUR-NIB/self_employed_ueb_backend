@@ -2,7 +2,7 @@ from modules.application.background_jobs.mailer.Email import Email
 
 class Employee_Registration_Email(Email):
     def __init__(self,template):
-        self.recipient = "qarthur@nib-bahamas.com"
+        self.recipient = "registration@nib-bahamas.com"
         self.sender = "register@nib-bahamas.com"
         self.subject = "Employee Registration Notice"
         self.template = template

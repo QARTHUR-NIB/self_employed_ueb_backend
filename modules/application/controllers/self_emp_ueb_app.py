@@ -11,8 +11,11 @@ import os
 @app.route('/Self-Employed-UEB/application',methods = ["POST"])
 def create_application():
     try:
+        print("Inside Method")
         email_events = []
+        print("Connecting")
         conn = cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}")
+        print("Connected")
         cursor = conn.cursor()
         application_id = cursor.var(cx_Oracle.NUMBER,20) if not None else ''
         success = cursor.var(cx_Oracle.STRING,1) if not None else ''
