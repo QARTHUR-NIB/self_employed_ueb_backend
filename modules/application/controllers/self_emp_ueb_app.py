@@ -5,13 +5,12 @@ from modules.application import app
 from config import oraDB
 from redis import Redis
 from rq import Queue
-from modules.application.background_jobs.mailer.Html_Mailer import send_mail
 import os
+from modules.application.background_jobs.mailer.Html_Mailer import send_mail
 
 @app.route('/Self-Employed-UEB/application',methods = ["POST"])
 def create_application():
-    try:
-        email_events = []
+    try: 
         conn = cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}")
         cursor = conn.cursor()
         application_id = cursor.var(cx_Oracle.NUMBER,20) if not None else ''
@@ -41,17 +40,10 @@ def create_application():
                         erni,email,primary_contact,secondary_contact,place_of_operation,island_of_operation,\
                         estimated_weekly_earnings,user,account_owner,branch_number,account_type,bank_account_number,\
                         bank_info_status,bank_info_exists,nature_of_employment,application_id,success,message])
+
         if success.getvalue() == "N":
             raise Exception(f"Error Submitting Application: {message.getvalue()}")
-        
-        if len(eeni) == 0:
-            email_events.append("Employee Registration")
-        
-        if len(erni) == 0:
-            email_events.append("Employer Registration")
-    
-        email_events.append("Application Submitted")
-        send_mail(email_events,params)
+       
         return jsonify(success='Y',application_id=application_id.getvalue(),message=''),201
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500
@@ -96,9 +88,8 @@ def get_applications():
             str_sql = f"select * from(\
                             select app.*,row_number() over (order by app.app_id) rn,\
                             count(*) over () \
-                            from client.self_emp_ueb_app app {where_clause}\
-                        ) applications\
-                        where rn between ((:page_size * :page_number) - (:page_size - 1)) and (:page_size * :page_number)"
+                            from client.self_emp_ueb_app app\
+                        ) applications {where_clause} and rn between ((:page_size * :page_number) - (:page_size - 1)) and (:page_size * :page_number)"
         else:
             #path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\get_applications.sql"
             path = os.path.join(app.config['SCRIPT_FOLDER'],"get_applications.sql")
@@ -114,7 +105,7 @@ def get_applications():
                     if not rows:
                         break
                     for r in rows:
-                        count = r[24]
+                        count = r[25]
                         result = {"application_id":r[0],"first_name":r[1],"last_name":r[2],
                                 "dob":r[3],"eeni":r[4],"erni":r[5],
                                 "email":r[6],"primary_contact":r[7],"secondary_contact":r[8],
@@ -219,5 +210,21 @@ def update_application_status(app_id):
         sql.close()   
         send_mail(email_events,user_app)
         return jsonify(success="Y",data=data),200
+    except Exception as e:
+        return jsonify(success="N",message=f"System Error: {str(e)}"),500
+
+@app.route('/Self-Employed-UEB/applications/<int:app_id>',methods = ["DELETE"])
+@jwt_required
+def delete_application_status(app_id):
+    try:
+        conn = cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}")
+        cursor = conn.cursor()
+        success = cursor.var(cx_Oracle.STRING,1) if not None else ''
+        message = cursor.var(cx_Oracle.STRING,250) if not None else ''
+        cursor.callproc("client.delete_self_emp_ueb_app",[app_id,success,message])
+        if success.getvalue() == "N":
+            raise Exception(f"Error Deleting Application: {message.getvalue()}")
+
+        return jsonify(success="Y",message=""),200
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500
