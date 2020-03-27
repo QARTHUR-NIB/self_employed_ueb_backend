@@ -72,10 +72,10 @@ def upload_file(app_id):
 									"url":f"/Self-Employed-UEB/applications/{r[0]}"}
 			sql.close()
 					 
-			if len(user["eeni"]) == 0:
+			if len(str(user["eeni"])) == 0:
 				email_events.append("Employee Registration")
 			
-			if len(user["erni"]) == 0:
+			if len(str(user["erni"])) == 0:
 				email_events.append("Employer Registration")
 		
 			email_events.append("Application Submitted")
