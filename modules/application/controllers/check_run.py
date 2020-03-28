@@ -67,11 +67,14 @@ def write_file(file_path,line):
 def get_check_run_details():
     try:
         data = []	
-        status = ""
         path = os.path.join(app.config['SCRIPT_FOLDER'],"get_eft_pending_payments.sql")
         sql = open(path,"r")
         file_header = None
         batch_header = None
+        count = 0
+        block_count = 0
+        entry_hash = 0
+        total_credit = 0
         with cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}") as conn:
             with conn.cursor() as cursor:
                 results = cursor.execute(sql.read())
@@ -79,21 +82,36 @@ def get_check_run_details():
                     rows = results.fetchall()
                     if not rows:
                         break
-
+                    #Write EFT File(Nacha File Format)    
                     file_name = f"SE_UEB_EFT_{datetime.today().strftime('%Y-%m-%d-%I%M')}.txt"
                     file_path = os.path.join(app.config['EFT_FILES_FOLDER'],file_name)
-                    #write file header
                     file_header = f"101 0056250030000000000{datetime.today().strftime('%y%m%d')}{datetime.today().strftime('%I%M')}1094101Royal Bank of Canada"\
                                   "   National Insurance             "
                     write_file(file_path,file_header)
                     batch_header = f"5220NIB             Long Term Benefits  0002883221PPDClaims    {datetime.today().strftime('%y%m%d')}{datetime.today().strftime('%y%m%d')}"\
                                   "0001056250030000001"
                     write_file(file_path,batch_header)
+                    count =  len(rows)
+                    if (count + 4) % 10 == 0:
+                        block_count = int((count + 4) / 10)
+                    else:
+                        block_count = int((count + 4) / 10) + 1
+                        
                     for r in rows:
-                        pmt_record = f"{r[0]}{r[1]}{r[2]}{r[3]}{r[4]:<17}{r[5]:010}{r[6]:<15}{r[7]:<22}{r[8]}{r[9]:06}"
+                        pmt_record = f"{r[0]}{r[1]}{r[2].rjust(8,'0')}{r[3]}{r[4]:<17}{r[5]:010}{r[6]:<15}{r[7]:<22}{r[8]}{r[9]:06}"
                         write_file(file_path,pmt_record)
-
-                    #batch_control = f"8220{count:06}"
+                        entry_hash += int(r[2])
+                        total_credit+= r[5]
+                    
+                    entry_hash = str(entry_hash)[-10:] #entry has = last 10 digits of the sum of all routing numbers
+                    batch_control = f"8220{count:06}{str(entry_hash).ljust(10,'0')}000000000000{total_credit:012}0000000000"\
+                                    "                         "\
+                                    "056250030000001"
+                    write_file(file_path,batch_control)
+                    file_control = f"9000001{block_count:06}{count:08}{str(entry_hash).ljust(10,'0')}000000000000{total_credit:012}"
+                    write_file(file_path,file_control)
+                    end_of_file = "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+                    write_file(file_path,end_of_file)
 	
         for file in glob.glob(f"{app.config['EFT_FILES_FOLDER']}\\*.*"):
             data.append({"file_name":os.path.basename(file),
