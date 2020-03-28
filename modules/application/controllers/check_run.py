@@ -1,6 +1,7 @@
 import cx_Oracle
+import glob
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_jwt_extended import (jwt_required, get_jwt_identity)
 from modules.application import app
 from config import oraDB
@@ -50,13 +51,24 @@ def get_check_run_status():
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500
 
+def write_file(file_path,line):
+    try:         
+        with open(file_path,'a') as check_file:
+            print(line)
+            check_file.write(line)
+            check_file.write("\n")
+        #logger = csv.writer(log_file,delimiter=",",quotechar='"',quoting=csv.QUOTE_MINIMAL)
+        #logger.writerow(tuple(row))
+    except Exception as e:
+        print(f"Error writing exception file: {str(e)}")
+
 @app.route('/check-run',methods = ["GET"])
 @jwt_required
 def get_check_run_details():
     try:
+        data = []	
         status = ""
-        completed = False
-        path = os.path.join(app.config['SCRIPT_FOLDER'],"get_pending_reissued_payments.sql")
+        path = os.path.join(app.config['SCRIPT_FOLDER'],"get_eft_pending_payments.sql")
         sql = open(path,"r")
         file_header = None
         batch_header = None
@@ -67,24 +79,50 @@ def get_check_run_details():
                     rows = results.fetchall()
                     if not rows:
                         break
+
+                    file_name = f"SE_UEB_EFT_{datetime.today().strftime('%Y-%m-%d-%I%M')}.txt"
+                    file_path = os.path.join(app.config['EFT_FILES_FOLDER'],file_name)
                     #write file header
                     file_header = f"101 0056250030000000000{datetime.today().strftime('%y%m%d')}{datetime.today().strftime('%I%M')}1094101Royal Bank of Canada"\
                                   "   National Insurance             "
+                    write_file(file_path,file_header)
                     batch_header = f"5220NIB             Long Term Benefits  0002883221PPDClaims    {datetime.today().strftime('%y%m%d')}{datetime.today().strftime('%y%m%d')}"\
                                   "0001056250030000001"
-                    print(file_header)
-                    print(batch_header)
+                    write_file(file_path,batch_header)
                     for r in rows:
                         pmt_record = f"{r[0]}{r[1]}{r[2]}{r[3]}{r[4]:<17}{r[5]:010}{r[6]:<15}{r[7]:<22}{r[8]}{r[9]:06}"
-                        print(pmt_record)
+                        write_file(file_path,pmt_record)
 
                     #batch_control = f"8220{count:06}"
+	
+        for file in glob.glob(f"{app.config['EFT_FILES_FOLDER']}\\*.*"):
+            data.append({"file_name":os.path.basename(file),
+                            "file_type":"EFT",
+                            "url":f"/check-run/eft/file/{os.path.basename(file)}"
+            })
 
-
-        if status in ['JOB_SUCCEEDED','JOB_COMPLETED']:
-            completed = True
+        for file in glob.glob(f"{app.config['MANUAL_CHECK_FOLDER']}\\*.*"):
+            data.append({"file_name":os.path.basename(file),
+                            "file_type":"MANUAL",
+                            "url":f"/check-run/manual/file/{os.path.basename(file)}"
+            })
         
         sql.close()
-        return jsonify(success='Y',completed=completed),200
+        return jsonify(success='Y',data=data),200
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500
+
+
+@app.route('/check-run/eft/file/<string:file_name>',methods = ["GET"])
+def download_eft_file(file_name):
+	try:
+		return send_from_directory(f"{app.config['EFT_FILES_FOLDER']}",file_name,as_attachment=True)
+	except Exception as e:
+		return jsonify(success="N",message=f"System Error: {str(e)}"),500
+
+@app.route('/check-run/manual/file/<string:file_name>',methods = ["GET"])
+def download_manual_file(file_name):
+	try:
+		return send_from_directory(f"{app.config['MANUAL_CHECK_FOLDER']}",file_name,as_attachment=True)
+	except Exception as e:
+		return jsonify(success="N",message=f"System Error: {str(e)}"),500

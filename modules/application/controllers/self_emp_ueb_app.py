@@ -214,7 +214,6 @@ def update_application_status(app_id):
         return jsonify(success="N",message=f"System Error: {str(e)}"),500
 
 @app.route('/Self-Employed-UEB/applications/<int:app_id>',methods = ["DELETE"])
-@jwt_required
 def delete_application_status(app_id):
     try:
         conn = cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}")
