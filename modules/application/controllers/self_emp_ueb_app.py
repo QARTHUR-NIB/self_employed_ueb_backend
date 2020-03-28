@@ -88,8 +88,9 @@ def get_applications():
             str_sql = f"select * from(\
                             select app.*,row_number() over (order by app.app_id) rn,\
                             count(*) over () \
-                            from client.self_emp_ueb_app app\
-                        ) applications {where_clause} and rn between ((:page_size * :page_number) - (:page_size - 1)) and (:page_size * :page_number)"
+                            from client.self_emp_ueb_app app {where_clause}\
+                        ) applications\
+                        where rn between ((:page_size * :page_number) - (:page_size - 1)) and (:page_size * :page_number)"
         else:
             #path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\get_applications.sql"
             path = os.path.join(app.config['SCRIPT_FOLDER'],"get_applications.sql")
