@@ -20,27 +20,27 @@
     <div class="wrapper">
       <p>Hello {{application.first_name}},</p>
       <p>
-        A payment for your {{application.type}} application has been generated
+        A payment for your Self Employed Governement Assistance application has been generated
         for the following pay period:
       </p>
       <p>
-        {{application.payment.beg_pay_period}} -
-        {{application.payment.end_pay_period}}
+        {{application.beg_pay_period}} -
+        {{application.end_pay_period}}
       </p>
       <p>
-        {{application.payment.num_weeks_paid}} of {{application.max_weeks}}
+        {{application.num_weeks_paid}} of {{application.max_weeks}}
         weeks paid.
       </p>
-      {%if appplication.payment.pmt_type == 'EFT'%}
+      {%if application.pmt_type == 'EFT'%}
       <p>
         Payments should be visible on the account specified below within the 1-3
         business days:
       </p>
       <ul>
-        <li>Bank: {{application.bank.branch}}</li>
-        <li>Account Number: {{application.bank.bank_account_number}}</li>
+        <li>Bank: {{application.branch_name}}</li>
+        <li>Account Number: {{application.bank_account_number}}</li>
       </ul>
-      {{%elif appplication.payment.pmt_type == 'Check' %}}
+      {%elif application.pmt_type == 'Check' %}
       <p>
         Your check should be ready for pick up within the 1-3 business days.
       </p>

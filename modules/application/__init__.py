@@ -4,6 +4,13 @@ from flask_jwt_extended import JWTManager
 from datetime import timedelta
 import os
 from config import jwt
+from modules.application.background_jobs.notify_applicants_of_payments import send_notice_to_all_paid_applicants
+from apscheduler.schedulers.background import BackgroundScheduler
+
+# initialize scheduler
+sched = BackgroundScheduler(daemon=True)
+sched.add_job(send_notice_to_all_paid_applicants,'cron',id="payment_notice",hour='17',minute='9',start_date='2020-03-29')
+sched.start()
 
 app = Flask(__name__, template_folder="templates")
 CORS(app)

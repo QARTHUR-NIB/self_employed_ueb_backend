@@ -132,8 +132,14 @@ def get_check_run_details():
                     for r in rows:
                         write_manual_check_file(file_path,r)
                     sql.close()
-                    
-	
+
+                #update all pending payments to paid
+                script_path = os.path.join(app.config['SCRIPT_FOLDER'],"mark_pending_reissued_pmts_paid.sql")
+                update_sql = open(script_path,"r") 
+                cursor.execute(update_sql.read())
+                conn.commit()
+                update_sql.close()
+                    	
         for file in glob.glob(f"{app.config['EFT_FILES_FOLDER']}\\*.*"):
             data.append({"file_name":os.path.basename(file),
                             "file_type":"EFT",
@@ -145,8 +151,7 @@ def get_check_run_details():
                             "file_type":"MANUAL",
                             "url":f"/check-run/manual/file/{os.path.basename(file)}"
             })
-        
-        sql.close()
+
         return jsonify(success='Y',data=data),200
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500
