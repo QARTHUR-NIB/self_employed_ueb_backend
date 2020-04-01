@@ -32,7 +32,6 @@ def get_bank_account_info(app_id):
     try:
         data = []
         params = {"app_id":app_id}
-        #path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\get_bank_info.sql"
         path = os.path.join(app.config['SCRIPT_FOLDER'],"get_bank_info.sql")
         sql = open(path,"r")
         with cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}") as conn:
@@ -43,7 +42,7 @@ def get_bank_account_info(app_id):
                     if not rows:
                         break
                     for r in rows:
-                        data.append({"branch_number":r[2],"account_type":r[3],
+                        data.append({"branch_number":r[2],"branch_name":r[9],"account_type":r[3],
                                      "bank_account_number":r[4],"account_owner":r[5],
                                      "status":r[6],"inserted_by":r[7],"inserted_date":r[8]})     
         sql.close()

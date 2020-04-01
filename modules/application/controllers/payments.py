@@ -82,3 +82,27 @@ def update_payment_status(app_id,pmt_id):
         return jsonify(success="Y",data=data),200
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500
+
+@app.route('/Self-Employed-UEB/applications/<int:app_id>/payments/summary',methods = ["GET"])
+@jwt_required
+def get_payment_summary(app_id):
+    try:
+        data = []
+        path = os.path.join(app.config['SCRIPT_FOLDER'],"get_payment_summary.sql")
+        sql = open(path,"r")
+        params = {"app_id":app_id}
+        with cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}") as conn:
+            with conn.cursor() as cursor:
+                results = cursor.execute(sql.read(),params)
+                while True:
+                    rows = results.fetchall()
+                    if not rows:
+                        break
+                    for r in rows:
+                        result = {"tot_amt_paid":r[1],"tot_weeks_paid":r[2]
+                                 }
+                        data.append(result)
+        sql.close()
+        return jsonify(success="Y",data=data),200
+    except Exception as e:
+        return jsonify(success="N",message=f"System Error: {str(e)}"),500

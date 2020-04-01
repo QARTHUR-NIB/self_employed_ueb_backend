@@ -3,8 +3,6 @@ from flask import Flask, request, jsonify
 from flask_jwt_extended import (jwt_required, get_jwt_identity)
 from modules.application import app
 from config import oraDB
-from redis import Redis
-from rq import Queue
 import os
 from modules.application.background_jobs.mailer.Html_Mailer import send_mail
 
@@ -56,10 +54,12 @@ def get_applications():
         path = ""
         where_clause = ""
         count = 0
-        params = request.json
+        #params = request.json
+        params = request.args
         first_name = request.args["first_name"]
         last_name = request.args["last_name"]
         status = request.args["status"]
+        routed_to = request.args['routed_to']
         num_filters = 0
         sql = None
 
@@ -83,6 +83,13 @@ def get_applications():
             else:
                 where_clause = f"where status = '{status}' "
             num_filters+=1
+        
+        if len(routed_to) > 0:
+            if num_filters > 0:
+                where_clause += f"and upper(routed_to) like '%'||upper('{routed_to}')||'%' "
+            else:
+                where_clause = f"where upper(routed_to) like '%'||upper('{routed_to}')||'%' "
+                num_filters+=1
 
         if num_filters > 0:
             str_sql = f"select * from(\
@@ -106,7 +113,7 @@ def get_applications():
                     if not rows:
                         break
                     for r in rows:
-                        count = r[25]
+                        count = r[27]
                         result = {"application_id":r[0],"first_name":r[1],"last_name":r[2],
                                 "dob":r[3],"eeni":r[4],"erni":r[5],
                                 "email":r[6],"primary_contact":r[7],"secondary_contact":r[8],
@@ -115,8 +122,8 @@ def get_applications():
                                 "inserted_by":r[15],
                                 "inserted_date":r[16],"updated_by":r[17],"updated_date":r[18],
                                 "approved_by":r[19],"denied_by":r[20],"comment":r[21],
-                                "denial_date":r[22],"nature_of_employment":r[23],
-                                "row_number":r[24],"url":f"/Self-Employed-UEB/applications/{r[0]}"}
+                                "denial_date":r[22],"nature_of_employment":r[23],"routed_to":r[24],
+                                "routed_date":r[25],"row_number":r[26],"url":f"/Self-Employed-UEB/applications/{r[0]}"}
                         data.append(result)
         if sql:
             sql.close()
@@ -129,7 +136,6 @@ def get_applications():
 def get_application(app_id):
     try:
         data = []
-        #path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\get_individual_applications.sql"
         path = os.path.join(app.config['SCRIPT_FOLDER'],"get_individual_applications.sql")
         sql = open(path,"r")
         params = {"app_id":app_id}
@@ -149,8 +155,8 @@ def get_application(app_id):
                                 "inserted_by":r[15],
                                 "inserted_date":r[16],"updated_by":r[17],"updated_date":r[18],
                                 "approved_by":r[19],"denied_by":r[20],"comment":r[21],
-                                "denial_date":r[22],"nature_of_employment":r[23],
-                                "url":f"/Self-Employed-UEB/applications/{r[0]}"}
+                                "denial_date":r[22],"nature_of_employment":r[23],"routed_to":r[24],
+                                "routed_date":r[25],"url":f"/Self-Employed-UEB/applications/{r[0]}"}
                         data.append(result)
         sql.close()
         return jsonify(success="Y",data=data),200
@@ -226,5 +232,23 @@ def delete_application_status(app_id):
             raise Exception(f"Error Deleting Application: {message.getvalue()}")
 
         return jsonify(success="Y",message=""),200
+    except Exception as e:
+        return jsonify(success="N",message=f"System Error: {str(e)}"),500
+
+@app.route('/Self-Employed-UEB/applications/<int:app_id>/owner',methods = ["POST"])
+@jwt_required
+def route_application_to_user(app_id):
+    try:
+        user = get_jwt_identity()
+        user = user["user_name"]
+        conn = cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}")
+        cursor = conn.cursor()
+        success = cursor.var(cx_Oracle.STRING,1) if not None else ''
+        message = cursor.var(cx_Oracle.STRING,250) if not None else ''
+        cursor.callproc("client.self_emp_ueb_route_app_to_me",[app_id,user,success,message])
+        if success.getvalue() == "N":
+            raise Exception(f"Error Routing Application: {message.getvalue()}")
+
+        return jsonify(success="Y",message=message.getvalue()),200
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500

@@ -2,7 +2,7 @@ import cx_Oracle
 from config import oraDB
 import os
 import urllib.request
-from modules.application import app
+from modules.application import app,sched
 from flask import Flask, request, redirect, jsonify, send_from_directory
 from flask_jwt_extended import (jwt_required, get_jwt_identity)
 from werkzeug.utils import secure_filename
@@ -108,6 +108,6 @@ def get_uploaded_files(app_id):
 @app.route('/uploads/<string:app_id>/file/<string:file_name>',methods = ["GET"])
 def download_file(app_id,file_name):
 	try:
-		return send_from_directory(f"{app.config['UPLOAD_FOLDER']}\\{app_id}",file_name,as_attachment=True)
+		return send_from_directory(f"{app.config['UPLOAD_FOLDER']}\\{app_id}",file_name)
 	except Exception as e:
 		return jsonify(success="N",message=f"System Error: {str(e)}"),500
