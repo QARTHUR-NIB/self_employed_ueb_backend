@@ -8,7 +8,6 @@ from config import oraDB
 def get_emp(erni):
     try:
         res = None
-        #path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\validate_emp_nib#.sql"
         path = os.path.join(app.config['SCRIPT_FOLDER'],"validate_emp_nib#.sql")
         sql = open(path,"r")
         params = {"erni#":erni}

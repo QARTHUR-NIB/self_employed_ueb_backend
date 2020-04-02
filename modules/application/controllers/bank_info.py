@@ -77,3 +77,21 @@ def create_bank_account_info(app_id):
         return jsonify(success='Y',message=''),200
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500
+
+@app.route('/Self-Employed-UEB/applications/<int:app_id>/banking-info/status',methods = ["PUT"])
+@jwt_required
+def deactivate_bank_account_info(app_id):
+    try:
+        conn = cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}")
+        cursor = conn.cursor()
+        params = {"app_id":app_id}
+        path = os.path.join(app.config['SCRIPT_FOLDER'],"deactivate_app_bank_info.sql")
+        sql = open(path,"r")
+        with cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}") as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(sql.read(),params)
+                conn.commit()
+        sql.close()
+        return jsonify(success='Y',message=''),200
+    except Exception as e:
+        return jsonify(success="N",message=f"System Error: {str(e)}"),500

@@ -62,7 +62,7 @@ def execute_check_run():
                     file_header = f"101 0056250030000000000{datetime.today().strftime('%y%m%d')}{datetime.today().strftime('%I%M')}1094101Royal Bank of Canada"\
                                     "   National Insurance             "
                     write_eft_file(file_path,file_header)
-                    batch_header = f"5220NIB             Gov Unemp Asst      0002197192PPDClaims    {datetime.today().strftime('%y%m%d')}{datetime.today().strftime('%y%m%d')}"\
+                    batch_header = f"5220NIB             Long Term Benefits  0002197192PPDClaims    {datetime.today().strftime('%y%m%d')}{datetime.today().strftime('%y%m%d')}"\
                                     "0001056250030000001"
                     write_eft_file(file_path,batch_header)
                     count =  len(rows)
