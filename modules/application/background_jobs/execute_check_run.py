@@ -19,6 +19,7 @@ def write_eft_file(file_path,line):
 def write_manual_check_file(file_path,row):
     try:         
         with open(file_path,'a') as manual_check:
+            print(f"Writing:{file_path}:{row}")
             logger = csv.writer(manual_check,delimiter=",",quotechar='"',quoting=csv.QUOTE_MINIMAL)
             logger.writerow(tuple(row))
     except Exception as e:
@@ -55,7 +56,9 @@ def execute_check_run():
                 while True:
                     rows = results.fetchall()
                     if not rows:
+                        print("Not Found")
                         break
+                    print("found")
                     #Write EFT File(Nacha File Format)    
                     file_name = f"SE_UEB_EFT_{datetime.today().strftime('%Y-%m-%d-%I%M')}.txt"
                     file_path = os.path.join(EFT_FILES_FOLDER,file_name)
@@ -88,16 +91,18 @@ def execute_check_run():
                     write_eft_file(file_path,end_of_file)
                     sql.close()
 
-                    #Get Manual Check Payments
-                    file_name = f"SE_UEB_MANUAL_{datetime.today().strftime('%Y-%m-%d-%I%M')}.csv"
-                    file_path = os.path.join(MANUAL_CHECK_FOLDER,file_name)
-                    path = os.path.join(scripts_path,"get_pending_reissued_manual_payments.sql")
-                    sql = open(path,"r") 
-                    results = cursor.execute(sql.read())
+                #Get Manual Check Payments
+                file_name = f"SE_UEB_MANUAL_{datetime.today().strftime('%Y-%m-%d-%I%M')}.csv"
+                file_path = os.path.join(MANUAL_CHECK_FOLDER,file_name)
+                path = os.path.join(scripts_path,"get_pending_reissued_manual_payments.sql")
+                sql = open(path,"r") 
+                results = cursor.execute(sql.read())
+                while True:
                     rows = results.fetchall()
                     if not rows:
                         break
                     for r in rows:
+                        print(f"Manual Checks:{r}")
                         write_manual_check_file(file_path,r)
                     sql.close()
 
