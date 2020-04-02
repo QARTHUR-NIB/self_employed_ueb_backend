@@ -11,7 +11,6 @@ import csv
 def write_eft_file(file_path,line):
     try:         
         with open(file_path,'a') as eft:
-            print(f"Writing to: {file_path}  {line}")
             eft.write(line)
             eft.write("\n")
     except Exception as e:
@@ -63,7 +62,7 @@ def execute_check_run():
                     file_header = f"101 0056250030000000000{datetime.today().strftime('%y%m%d')}{datetime.today().strftime('%I%M')}1094101Royal Bank of Canada"\
                                     "   National Insurance             "
                     write_eft_file(file_path,file_header)
-                    batch_header = f"5220NIB             Long Term Benefits  0002883221PPDClaims    {datetime.today().strftime('%y%m%d')}{datetime.today().strftime('%y%m%d')}"\
+                    batch_header = f"5220NIB             Gov Unemp Asst      0002197192PPDClaims    {datetime.today().strftime('%y%m%d')}{datetime.today().strftime('%y%m%d')}"\
                                     "0001056250030000001"
                     write_eft_file(file_path,batch_header)
                     count =  len(rows)
@@ -79,11 +78,11 @@ def execute_check_run():
                         total_credit+= r[5]
                     
                     entry_hash = str(entry_hash)[-10:] #entry has = last 10 digits of the sum of all routing numbers
-                    batch_control = f"8220{count:06}{str(entry_hash).ljust(10,'0')}000000000000{total_credit:012}0000000000"\
+                    batch_control = f"8220{count:06}{entry_hash:0>10}000000000000{total_credit:012}0000000000"\
                                     "                         "\
                                     "056250030000001"
                     write_eft_file(file_path,batch_control)
-                    file_control = f"9000001{block_count:06}{count:08}{str(entry_hash).ljust(10,'0')}000000000000{total_credit:012}"
+                    file_control = f"9000001{block_count:06}{count:08}{entry_hash:0>10}000000000000{total_credit:012}"
                     write_eft_file(file_path,file_control)
                     end_of_file = "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"
                     write_eft_file(file_path,end_of_file)
@@ -112,5 +111,7 @@ def execute_check_run():
                 email_events.append("Check Run Completed")
                 send_mail(email_events,None)
     except Exception as e:
-        print(str(e))
-        #eturn jsonify(success="N",message=f"System Error: {str(e)}"),500
+        email_events = []
+        error_message = str(e)
+        email_events.append("Check Run Aborted")
+        send_mail(email_events,error_message)

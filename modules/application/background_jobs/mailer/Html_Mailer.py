@@ -7,7 +7,7 @@ from flask import render_template
 import jinja2
 from modules.application.background_jobs.mailer import Submission_Email,Employee_Registration_Email,Employer_Registration_Email,\
                                                        Application_Approved_Email,Application_Denied_Email,Payment_Notice_Email,\
-                                                       Check_Run_Completed_Email
+                                                       Check_Run_Completed_Email,Check_Run_Aborted_Email
 
 def send_mail(email_events,application):
      for event in email_events:
@@ -47,4 +47,12 @@ def send_mail(email_events,application):
             template = env.get_template('check_run_completed.html')
             template = template.render()
             check_run_completed_email = Check_Run_Completed_Email.Check_Run_Completed_Email(template)
+            check_run_completed_email.send()
+        elif event == "Check Run Aborted":
+            env = jinja2.Environment(
+                            loader=jinja2.PackageLoader('modules.application','templates')
+             )
+            template = env.get_template('check_run_aborted.html')
+            template = template.render(error_message=application)
+            check_run_completed_email = Check_Run_Aborted_Email.Check_Run_Aborted_Email(template)
             check_run_completed_email.send()
