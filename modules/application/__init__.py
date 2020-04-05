@@ -9,7 +9,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 # initialize scheduler
 sched = BackgroundScheduler(daemon=True)
-sched.add_job(send_notice_to_all_paid_applicants,'cron',id="payment_notice",hour='0',minute='0',start_date='2020-03-31')
+sched.add_job(send_notice_to_all_paid_applicants,'cron',id="payment_notice",hour='0',minute='0',start_date='2020-04-03')
 sched.start()
 
 app = Flask(__name__, template_folder="templates")

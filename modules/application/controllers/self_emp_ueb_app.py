@@ -54,7 +54,6 @@ def get_applications():
         path = ""
         where_clause = ""
         count = 0
-        #params = request.json
         params = request.args
         first_name = request.args["first_name"]
         last_name = request.args["last_name"]
@@ -99,7 +98,6 @@ def get_applications():
                         ) applications\
                         where rn between ((:page_size * :page_number) - (:page_size - 1)) and (:page_size * :page_number)"
         else:
-            #path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\get_applications.sql"
             path = os.path.join(app.config['SCRIPT_FOLDER'],"get_applications.sql")
             sql = open(path,"r")
             str_sql = sql.read()
@@ -168,7 +166,6 @@ def get_application(app_id):
 def update_application(app_id):
     try:
         data = []
-        #path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\update_application.sql"
         path = os.path.join(app.config['SCRIPT_FOLDER'],"update_application.sql")
         sql = open(path,"r")
         user = get_jwt_identity()
@@ -192,20 +189,24 @@ def update_application_status(app_id):
         email_events = []
         path = ""
         params = request.json
-        user_app = params.get('application')
-        user_app["comment"] = params["user_comment"]
-        del params['application'] #remove application because oracle cannot not parse dictionary data
+
         if params["status"] == 'Approved':
-            #path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\approve_application.sql"
+            user_app = params.get('application')
+            user_app["comment"] = params["user_comment"]
             path = os.path.join(app.config['SCRIPT_FOLDER'],"approve_application.sql")
             email_events.append("Application Approved")
         elif params["status"] == 'Denied':
-            #path = r"\\jumvmfileprdcfs\Vitech\SQL Scripts\SelfEmployed_UEB\deny_application.sql"
+            user_app = params.get('application')
+            user_app["comment"] = params["user_comment"]
             path = os.path.join(app.config['SCRIPT_FOLDER'],"deny_application.sql")
             email_events.append("Application Denied")
+        elif params["status"] == 'Pending':
+            del params['user_comment'] #remove because this field is not needed in override script
+            path = os.path.join(app.config['SCRIPT_FOLDER'],"override_application_status.sql")
         else:
             raise Exception("Invalid Status only ['Pending','Approved','Denied'] permitted")
-
+        
+        del params['application'] #remove application because oracle cannot not parse dictionary data
         sql = open(path,"r")
         user = get_jwt_identity()
         user = user['user_name']
@@ -214,8 +215,11 @@ def update_application_status(app_id):
             with conn.cursor() as cursor:
                 cursor.execute(sql.read(),params)
                 conn.commit()
-        sql.close()   
-        send_mail(email_events,user_app)
+        sql.close() 
+
+        if params['status'] not in ['Pending']:
+            send_mail(email_events,user_app)
+        
         return jsonify(success="Y",data=data),200
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500
