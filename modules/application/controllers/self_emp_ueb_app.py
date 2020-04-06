@@ -165,19 +165,30 @@ def get_application(app_id):
 @jwt_required
 def update_application(app_id):
     try:
-        data = []
-        path = os.path.join(app.config['SCRIPT_FOLDER'],"update_application.sql")
-        sql = open(path,"r")
-        user = get_jwt_identity()
-        user = user['user_name']
         params = request.json
-        params.update([("user_name",user),("app_id",app_id)])
+        first_name = params["first_name"]
+        last_name = params["last_name"]
+        dob = params["dob"]
+        eeni = params["eeni"]
+        email = params["email"]
+        primary_contact = params["primary_contact"]
+        secondary_contact = params["secondary_contact"]
+        user_comment =  params["user_comment"]
+        user_name = get_jwt_identity()
+        user_name = user_name["user_name"]
+        missing_nib = params["missing_nib"]
+        
         with cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}") as conn:
             with conn.cursor() as cursor:
-                cursor.execute(sql.read(),params)
-                conn.commit()
-        sql.close()
-        return jsonify(success="Y",data=data),200
+                success = cursor.var(cx_Oracle.STRING,1) if not None else ''
+                message = cursor.var(cx_Oracle.STRING,250) if not None else ''
+                cursor.callproc("client.update_se_ueb_apps",[app_id,first_name,last_name,dob,eeni,\
+                                 email,primary_contact,secondary_contact,user_comment,user_name,missing_nib,success,message])
+
+        if success.getvalue() == "N":
+            raise Exception(f"Error Updating Application: {message.getvalue()}")
+       
+        return jsonify(success='Y',message=''),201
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500
 

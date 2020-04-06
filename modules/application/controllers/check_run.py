@@ -13,7 +13,9 @@ from modules.application.background_jobs.execute_check_run import execute_check_
 @jwt_required
 def execute_chk_run():
     try:
-        sched.add_job(execute_check_run,id="execute_check_run")
+        user = get_jwt_identity()
+        user = user["user_name"]
+        sched.add_job(execute_check_run,id="execute_check_run",args=[user])
         return jsonify(success="Y"),200
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500
