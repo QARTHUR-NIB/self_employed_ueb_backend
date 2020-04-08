@@ -267,3 +267,11 @@ def route_application_to_user(app_id):
         return jsonify(success="Y",message=message.getvalue()),200
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500
+
+@app.route('/test/email')
+def test_email():
+    email_events = []
+    user_app = "test"
+    email_events.append("Check Run Aborted")
+    send_mail(email_events,user_app)
+    return jsonify("Test Email Send Successfully"), 200
