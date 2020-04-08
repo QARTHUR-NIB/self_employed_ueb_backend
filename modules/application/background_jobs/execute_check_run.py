@@ -56,9 +56,7 @@ def execute_check_run(user_name):
                 while True:
                     rows = results.fetchall()
                     if not rows:
-                        print("Not Found")
                         break
-                    print("found")
                     #Write EFT File(Nacha File Format)    
                     file_name = f"SE_UEB_EFT_{datetime.today().strftime('%Y-%m-%d-%I%M')}.txt"
                     file_path = os.path.join(EFT_FILES_FOLDER,file_name)
@@ -105,6 +103,14 @@ def execute_check_run(user_name):
                         print(f"Manual Checks:{r}")
                         write_manual_check_file(file_path,r)
                     sql.close()
+
+                #write payments for check run to batch payment history
+                success = cursor.var(cx_Oracle.STRING,1) if not None else ''
+                message = cursor.var(cx_Oracle.STRING,250) if not None else ''
+                cursor.callproc("client.create_batch_pmt_history",[user_name,success,message])
+
+                if success.getvalue() == "N":
+                    raise Exception(f"Error Writing Payment Batch History: {message.getvalue()}")
 
                 #update all pending payments to paid
                 script_path = os.path.join(scripts_path,"mark_pending_reissued_pmts_paid.sql")
