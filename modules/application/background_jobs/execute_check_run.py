@@ -6,28 +6,30 @@ from config import oraDB
 import os
 from datetime import datetime
 from modules.application.background_jobs.mailer.Html_Mailer import send_mail
-import csv 
+import csv
+import logging
+
+LOG_FOLDER = 'C:\\Check_Run\\Logs'
+logging.basicConfig(filename=os.path.join(LOG_FOLDER,f"check_run_{datetime.today().strftime('%Y-%m-%d')}.log"),filemode='a',
+                    level=logging.INFO,format='%(asctime)s %(levelname)-8s %(message)s',datefmt='%Y-%m-%d %H:%M:%S')
+log = logging.getLogger()
 
 def write_eft_file(file_path,line):
-    try:         
-        with open(file_path,'a') as eft:
-            eft.write(line)
-            eft.write("\n")
-    except Exception as e:
-        print(f"Error writing exception file: {str(e)}")
+    with open(file_path,'a') as eft:
+        log.info(f"Writing:{file_path} : {line}")
+        eft.write(line)
+        eft.write("\n")
 
-def write_manual_check_file(file_path,row):
-    try:         
-        with open(file_path,'a') as manual_check:
-            print(f"Writing:{file_path}:{row}")
-            logger = csv.writer(manual_check,delimiter=",",quotechar='"',quoting=csv.QUOTE_MINIMAL)
-            logger.writerow(tuple(row))
-    except Exception as e:
-        print(f"Error writing exception file: {str(e)}")
+def write_CSV_file(file_path,row):
+    with open(file_path,'a',newline='') as csv_file:
+        log.info(f"Writing:{file_path} : {row}")
+        writer = csv.writer(csv_file,delimiter=",",quotechar='"',quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(tuple(row))
 
 def execute_check_run(user_name):
-    try: 
-        #Execute Check Run DB Process
+    try:
+        log.info("Initiating Check Run") 
+        #Execute Check Run DB Process (Generate Payments in Pending Status)
         conn = cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}")
         cursor = conn.cursor()
         success = cursor.var(cx_Oracle.STRING,1) if not None else ''
@@ -35,13 +37,12 @@ def execute_check_run(user_name):
         cursor.callproc("client.create_se_ueb_checks",[user_name,success,message])
 
         if success.getvalue() == "N":
-            raise Exception(f"Error Submitting Application: {message.getvalue()}")
+            raise Exception(f"Error Generating Payments: {message.getvalue()}")
 
+        log.info("Pending Payments Generated")
         data = []
         email_events = []
         scripts_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),"scripts")
-        path = os.path.join(scripts_path,"get_eft_pending_payments.sql")
-        sql = open(path,"r")
         file_header = None
         batch_header = None
         count = 0
@@ -50,8 +51,24 @@ def execute_check_run(user_name):
         total_credit = 0
         EFT_FILES_FOLDER = 'C:\\Check_Run\\EFT'
         MANUAL_CHECK_FOLDER = 'C:\\Check_Run\\Manual Check'
+        SUN_CASH_FOLDER = 'C:\\Check_Run\\Sun Cash'
         with cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}") as conn:
             with conn.cursor() as cursor:
+                
+                log.info("Executing Proc to create batch payment history")
+                #write payments for check run to batch payment history
+                success = cursor.var(cx_Oracle.STRING,1) if not None else ''
+                message = cursor.var(cx_Oracle.STRING,250) if not None else ''
+                cursor.callproc("client.create_batch_pmt_history",[user_name,success,message])
+
+                if success.getvalue() == "N":
+                    raise Exception(f"Error Writing Payment Batch History: {message.getvalue()}")
+
+                log.info("Batch Payment History Created")
+                log.info("Generating EFT payment file")
+                #process EFT Files
+                path = os.path.join(scripts_path,"get_eft_pending_payments.sql")
+                sql = open(path,"r")
                 results = cursor.execute(sql.read())
                 while True:
                     rows = results.fetchall()
@@ -89,7 +106,9 @@ def execute_check_run(user_name):
                     write_eft_file(file_path,end_of_file)
                     sql.close()
 
-                #Get Manual Check Payments
+                log.info(f"EFT Payment File Written Successfully")
+                log.info(f"Generating Manual Check File")
+                #Write Manual Check Payments
                 file_name = f"SE_UEB_MANUAL_{datetime.today().strftime('%Y-%m-%d-%I%M')}.csv"
                 file_path = os.path.join(MANUAL_CHECK_FOLDER,file_name)
                 path = os.path.join(scripts_path,"get_pending_reissued_manual_payments.sql")
@@ -100,18 +119,27 @@ def execute_check_run(user_name):
                     if not rows:
                         break
                     for r in rows:
-                        print(f"Manual Checks:{r}")
-                        write_manual_check_file(file_path,r)
+                        write_CSV_file(file_path,r)
                     sql.close()
 
-                #write payments for check run to batch payment history
-                success = cursor.var(cx_Oracle.STRING,1) if not None else ''
-                message = cursor.var(cx_Oracle.STRING,250) if not None else ''
-                cursor.callproc("client.create_batch_pmt_history",[user_name,success,message])
-
-                if success.getvalue() == "N":
-                    raise Exception(f"Error Writing Payment Batch History: {message.getvalue()}")
-
+                log.info(f"Manual Check File Written Successfully")
+                log.info(f"Generating Sun Cash Payment File")
+                #Write Sun Cash Payments
+                file_name = f"SE_UEB_SUN_CASH_{datetime.today().strftime('%Y-%m-%d-%I%M')}.csv"
+                file_path = os.path.join(SUN_CASH_FOLDER,file_name)
+                path = os.path.join(scripts_path,"get_pending_reissued_sun_cash_payments.sql")
+                sql = open(path,"r") 
+                results = cursor.execute(sql.read())
+                while True:
+                    rows = results.fetchall()
+                    if not rows:
+                        break
+                    for r in rows:
+                        write_CSV_file(file_path,r)
+                    sql.close()
+                
+                log.info(f"Sun Cash Payment File Written Successfully")
+                log.info(f"Updating all Pending/Reissued Payments to Paid")
                 #update all pending payments to paid
                 script_path = os.path.join(scripts_path,"mark_pending_reissued_pmts_paid.sql")
                 update_sql = open(script_path,"r") 
@@ -119,10 +147,14 @@ def execute_check_run(user_name):
                 conn.commit()
                 update_sql.close()
                 #notify users
+                log.info(f"All Pending/Reissued Payments marked as Paid")
+                log.info(f"Sending Successful Email...")
                 email_events.append("Check Run Completed")
                 send_mail(email_events,None)
+                log.info(f"Check Run Success Email Sent")
     except Exception as e:
-        email_events = []
         error_message = str(e)
+        log.error(f"Check Run Aborted: {error_message}")
+        email_events = []
         email_events.append("Check Run Aborted")
         send_mail(email_events,error_message)

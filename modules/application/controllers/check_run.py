@@ -37,6 +37,12 @@ def get_check_run_details():
                             "file_type":"MANUAL",
                             "url":f"/check-run/manual/file/{os.path.basename(file)}"
             })
+        
+        for file in glob.glob(f"{app.config['SUN_CASH_FOLDER']}\\*.*"):
+            data.append({"file_name":os.path.basename(file),
+                            "file_type":"SUN CASH",
+                            "url":f"/check-run/sun-cash/file/{os.path.basename(file)}"
+            })
 
         return jsonify(success='Y',data=data),200
     except Exception as e:
@@ -57,20 +63,38 @@ def download_manual_file(file_name):
 	except Exception as e:
 		return jsonify(success="N",message=f"System Error: {str(e)}"),500
 
+@app.route('/check-run/sun-cash/file/<string:file_name>',methods = ["GET"])
+def download_sun_cash_file(file_name):
+	try:
+		return send_from_directory(f"{app.config['SUN_CASH_FOLDER']}",file_name,as_attachment=True)
+	except Exception as e:
+		return jsonify(success="N",message=f"System Error: {str(e)}"),500
+
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = set(['csv'])
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def update_batch_pmt_history(file_stream):
-    #load file stream data into csv reader
+    params = {}
     csv_input = csv.reader(file_stream)
-    #for row in csv_input:
+    path = os.path.join(app.config['SCRIPT_FOLDER'],"update_batch_pmt_check_info.sql")
+    sql = open(path,"r")
+    with cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}") as conn:
+        with conn.cursor() as cursor:
+            script = sql.read()
+            for row in csv_input:
+                check_num = row[0]
+                if len(check_num) <= 0:
+                    raise Exception("check number cannot be blank")
+                batch_id = row[9]
+                pmt_id = row[10]
+                params = {"check_num":check_num,"batch_id":batch_id,"pmt_id":pmt_id}
+                cursor.execute(script,params)
+                conn.commit()
+                params.clear()
+    sql.close() 
 
-    #loop throguh csv file
-    #for each record in file update the check number and the generated flag
-
-
-@app.route('/check-run/manual/check/check-numbers',methods = ["POST"])
+@app.route('/check-run/manual/check/numbers',methods = ["POST"])
 @jwt_required
 def update_manual_check_numbers():
     try:
@@ -81,8 +105,8 @@ def update_manual_check_numbers():
             if file and allowed_file(file.filename):
                 file_stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
                 update_batch_pmt_history(file_stream)
-                filename = secure_filename(file.filename)
                 file_stream.seek(0)
+                success = True
             else:
                 errors[file.filename] = 'File type is not allowed'
         
@@ -93,8 +117,9 @@ def update_manual_check_numbers():
             return resp
         if success:
             #on successful upload read file and update batch payment history with the check numbers
-            resp = jsonify({'message' : 'Files successfully uploaded'})
+            resp = jsonify({'message' : 'Check Numbers updated successfully'})
             resp.status_code = 201
+            return resp
         else:
             resp = jsonify(errors)
             resp.status_code = 400

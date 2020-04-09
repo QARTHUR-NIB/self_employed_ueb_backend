@@ -18,11 +18,13 @@ CORS(app)
 UPLOAD_FOLDER = 'C:\\Uploads'
 EFT_FILES_FOLDER = 'C:\\Check_Run\\EFT'
 MANUAL_CHECK_FOLDER = 'C:\\Check_Run\\Manual Check'
+SUN_CASH_FOLDER = 'C:\\Check_Run\\Sun Cash'
 SCRIPT_FOLDER = os.path.dirname(os.path.realpath(__file__)) + "\\scripts"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['SCRIPT_FOLDER'] = SCRIPT_FOLDER
 app.config['EFT_FILES_FOLDER'] = EFT_FILES_FOLDER
 app.config['MANUAL_CHECK_FOLDER'] = MANUAL_CHECK_FOLDER
+app.config['SUN_CASH_FOLDER'] = SUN_CASH_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 app.config['JSON_AS_ASCII'] = False
 app.config['JWT_SECRET_KEY'] = jwt.secret
