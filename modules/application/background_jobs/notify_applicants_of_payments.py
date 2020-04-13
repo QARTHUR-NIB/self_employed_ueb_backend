@@ -23,7 +23,7 @@ def send_notice_to_all_paid_applicants():
                         application = {"first_name":r[0],"beg_pay_period":r[1],"end_pay_period":r[2],
                                         "num_weeks_paid":r[3],"max_weeks":r[4],"pmt_type":r[5],
                                         "branch_name":r[6],"bank_account_number":r[7],"pmt_id":r[8],
-                                        "email":r[9]}
+                                        "email":r[9],"tourism_industry":r[10]}
                                         
                         send_mail(email_events,application)
 

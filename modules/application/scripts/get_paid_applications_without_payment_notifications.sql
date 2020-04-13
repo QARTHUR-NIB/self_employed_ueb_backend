@@ -6,7 +6,8 @@ select app.first_name,to_char(pmt.beg_pay_period,'YYYY-MON-DD'),
         where pmt.app_id = app.app_id
          and pmt.status = 'Paid'
         ) num_weeks_paid,8 max_weeks,pmt.pmt_type,
-        branch.branch_name,bank.bank_account_number,pmt.pmt_id,app.email
+        branch.branch_name,bank.bank_account_number,pmt.pmt_id,app.email,
+        app.tourism_industry
 from client.self_emp_ueb_app app
 inner join client.self_emp_ueb_pmt_master pmt on pmt.app_id = app.app_id
  and pmt.status = 'Paid' and pmt.applicant_notified = 'N'

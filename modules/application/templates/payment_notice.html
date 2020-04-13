@@ -27,13 +27,15 @@
         {{application.beg_pay_period}} -
         {{application.end_pay_period}}
       </p>
+      {%if application.tourism_industry == 'Yes'%}
       <p>
         {{application.num_weeks_paid}} of {{application.max_weeks}}
         weeks paid.
       </p>
+      {%endif%}
       {%if application.pmt_type == 'EFT'%}
       <p>
-        Payments should be visible on the account specified below within the 1-3
+        Payments should be visible on the account specified below within 1-3
         business days:
       </p>
       <ul>
@@ -42,7 +44,7 @@
       </ul>
       {%elif application.pmt_type == 'Check' %}
       <p>
-        Your check should be ready for pick up within the 1-3 business days.
+        Your check should be ready for pick up within 1-3 business days.
       </p>
       {%endif%}
     </div>

@@ -8,4 +8,4 @@ inner join client.self_emp_ueb_app app on app.app_id = pmt.app_id
 inner join client.self_emp_ueb_batch_payments btch_pmts on btch_pmts.pmt_id = pmt.pmt_id
  and btch_pmts.batch_id = (select max(batch_id) keep (dense_rank last order by inserted_date)from client.self_emp_ueb_check_run_batch)
 where pmt.pmt_type = 'Check'
- and pmt.status in ('Pending','Reissued')
+ and pmt.status in ('Pending','Reissued') 

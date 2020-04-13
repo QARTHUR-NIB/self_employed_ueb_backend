@@ -19,14 +19,15 @@
   <body>
     <div class="wrapper">
       <p>Hello {{application.first_name}},</p>
-      <p>Your application has been submitted successfully.</p>
       <p>
-        We are pleased to inform you that your application for the Government
-        Assistance: Self Employed Unemployment Benefit has been approved.
+        We are pleased to inform you that your application for the Self Employed Government
+        Unemployment Assistance has been approved.
       </p>
+      {%if application.tourism_industry == 'Yes'%}
       <p>
         The assistance will span a total of 8 weeks.
       </p>
+      {%endif%}
     </div>
   </body>
 </html>
