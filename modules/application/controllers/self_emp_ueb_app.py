@@ -111,7 +111,7 @@ def get_applications():
                     if not rows:
                         break
                     for r in rows:
-                        count = r[28]
+                        count = r[29]
                         result = {"application_id":r[0],"first_name":r[1],"last_name":r[2],
                                 "dob":r[3],"eeni":r[4],"erni":r[5],
                                 "email":r[6],"primary_contact":r[7],"secondary_contact":r[8],
@@ -121,7 +121,7 @@ def get_applications():
                                 "inserted_date":r[16],"updated_by":r[17],"updated_date":r[18],
                                 "approved_by":r[19],"denied_by":r[20],"comment":r[21],
                                 "denial_date":r[22],"nature_of_employment":r[23],"routed_to":r[24],
-                                "routed_date":r[25],"tourism_industry":r[26],"row_number":r[27],"url":f"/Self-Employed-UEB/applications/{r[0]}"}
+                                "routed_date":r[25],"tourism_industry":r[26],"sun_cash_opt_in":r[27],"row_number":r[28],"url":f"/Self-Employed-UEB/applications/{r[0]}"}
                         data.append(result)
         if sql:
             sql.close()
@@ -154,7 +154,7 @@ def get_application(app_id):
                                 "inserted_date":r[16],"updated_by":r[17],"updated_date":r[18],
                                 "approved_by":r[19],"denied_by":r[20],"comment":r[21],
                                 "denial_date":r[22],"nature_of_employment":r[23],"routed_to":r[24],
-                                "routed_date":r[25],"tourism_industry":r[26],"url":f"/Self-Employed-UEB/applications/{r[0]}"}
+                                "routed_date":r[25],"tourism_industry":r[26],"sun_cash_opt_in":r[27],"url":f"/Self-Employed-UEB/applications/{r[0]}"}
                         data.append(result)
         sql.close()
         return jsonify(success="Y",data=data),200
@@ -178,13 +178,13 @@ def update_application(app_id):
         user_name = user_name["user_name"]
         missing_nib = params["missing_nib"]
         tourism_industry = params["tourism_industry"]
-        
+        sun_cash_opt_in = params["sun_cash_opt_in"]
         with cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}") as conn:
             with conn.cursor() as cursor:
                 success = cursor.var(cx_Oracle.STRING,1) if not None else ''
                 message = cursor.var(cx_Oracle.STRING,250) if not None else ''
                 cursor.callproc("client.update_se_ueb_apps",[app_id,first_name,last_name,dob,eeni,\
-                                 email,primary_contact,secondary_contact,user_comment,user_name,missing_nib,tourism_industry,success,message])
+                                 email,primary_contact,secondary_contact,user_comment,user_name,missing_nib,tourism_industry,sun_cash_opt_in,success,message])
 
         if success.getvalue() == "N":
             raise Exception(f"Error Updating Application: {message.getvalue()}")
