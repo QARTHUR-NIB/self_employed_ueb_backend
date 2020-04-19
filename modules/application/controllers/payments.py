@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify
 from flask_jwt_extended import (jwt_required, get_jwt_identity)
 from modules.application import app
 from config import oraDB
+from modules.application.background_jobs.notify_applicants_of_payments import send_notice_to_all_paid_applicants
 
 @app.route('/Self-Employed-UEB/applications/<int:app_id>/payments',methods = ["GET"])
 @jwt_required
@@ -106,3 +107,4 @@ def get_payment_summary(app_id):
         return jsonify(success="Y",data=data),200
     except Exception as e:
         return jsonify(success="N",message=f"System Error: {str(e)}"),500
+
