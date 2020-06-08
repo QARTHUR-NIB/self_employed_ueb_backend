@@ -18,10 +18,11 @@ def authenticate():
         conn.open()
         if conn is not None:
             success = 'Y'
-            access_token = create_access_token(identity=data)             
+            access_token = create_access_token(identity=data)
         
         return jsonify(success=success,token=access_token,message=""),200
     except Exception as e:
+        print(str(e))
         if str(e) == 'None':
             success = 'N'
             message = "Invalid Credentials"

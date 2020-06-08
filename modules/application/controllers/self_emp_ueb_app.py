@@ -154,7 +154,7 @@ def get_application(app_id):
                                 "inserted_date":r[16],"updated_by":r[17],"updated_date":r[18],
                                 "approved_by":r[19],"denied_by":r[20],"comment":r[21],
                                 "denial_date":r[22],"nature_of_employment":r[23],"routed_to":r[24],
-                                "routed_date":r[25],"tourism_industry":r[26],"sun_cash_opt_in":r[27],"url":f"/Self-Employed-UEB/applications/{r[0]}"}
+                                "routed_date":r[25],"sun_cash_opt_in":r[26],"tourism_industry":r[27],"url":f"/Self-Employed-UEB/applications/{r[0]}"}
                         data.append(result)
         sql.close()
         return jsonify(success="Y",data=data),200
