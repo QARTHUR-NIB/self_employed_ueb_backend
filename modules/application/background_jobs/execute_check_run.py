@@ -8,6 +8,7 @@ from datetime import datetime
 from modules.application.background_jobs.mailer.Html_Mailer import send_mail
 import csv
 import logging
+from modules.application.repositories.LumpSumCheckRun import LumpSumCheckRun
 
 LOG_FOLDER = 'C:\\Check_Run\\Logs'
 logging.basicConfig(filename=os.path.join(LOG_FOLDER,f"check_run_{datetime.today().strftime('%Y-%m-%d')}.log"),filemode='a',
@@ -30,14 +31,16 @@ def execute_check_run(user_name):
     try:
         log.info("Initiating Check Run") 
         #Execute Check Run DB Process (Generate Payments in Pending Status)
-        conn = cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}")
-        cursor = conn.cursor()
-        success = cursor.var(cx_Oracle.STRING,1) if not None else ''
-        message = cursor.var(cx_Oracle.STRING,250) if not None else ''
-        cursor.callproc("client.create_se_ueb_checks",[user_name,success,message])
+        checkrun = LumpSumCheckRun()
+        checkrun.generateLumpSumPayments()
+        # conn = cx_Oracle.connect(f"{oraDB.user_name}/{oraDB.password}@{oraDB.db}")
+        # cursor = conn.cursor()
+        # success = cursor.var(cx_Oracle.STRING,1) if not None else ''
+        # message = cursor.var(cx_Oracle.STRING,250) if not None else ''
+        # cursor.callproc("client.create_se_ueb_checks",[user_name,success,message])
 
-        if success.getvalue() == "N":
-            raise Exception(f"Error Generating Payments: {message.getvalue()}")
+        # if success.getvalue() == "N":
+        #     raise Exception(f"Error Generating Payments: {message.getvalue()}")
 
         log.info("Pending Payments Generated")
         data = []

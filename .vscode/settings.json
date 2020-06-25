@@ -1,3 +1,5 @@
 {
-    "python.pythonPath": "C:\\Users\\quincya\\.virtualenvs\\self_employed_ueb_backend-5wYyWNW3\\Scripts\\python.exe"
+    "python.pythonPath": "C:\\Users\\z-quincy\\.virtualenvs\\self_employed_ueb_backend-5wYyWNW3\\Scripts\\python.exe",
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true
 }
